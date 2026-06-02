@@ -406,6 +406,8 @@
       }
     }
   </style>
+  <script src="vendor/html2canvas.min.js"></script>
+  <script src="vendor/jspdf.umd.min.js"></script>
 </head>
 <body>
   <main class="app">
@@ -471,7 +473,7 @@ Este presupuesto es válido hasta la fecha indicada.</textarea>
           </label>
         </div>
         <div class="actions">
-          <button id="printQuote" class="btn" type="button">Guardar archivo</button>
+          <button id="printQuote" class="btn" type="button">Guardar PDF</button>
           <button id="whatsappQuote" class="btn secondary" type="button">Enviar WhatsApp</button>
           <button id="resetQuote" class="btn secondary" type="button">Restablecer</button>
         </div>
@@ -741,39 +743,62 @@ Este presupuesto es válido hasta la fecha indicada.</textarea>
         renderPreview();
       });
 
-      function saveQuoteFile() {
-        renderPreview();
-        var quote = document.querySelector(".quote");
-        var style = document.querySelector("style");
-        var number = document.getElementById("quoteNumber").value || "presupuesto";
-        var fileName = safeFileName(number) + ".html";
-        var html = ''
-          + '<!doctype html><html lang="es"><head><meta charset="utf-8" />'
-          + '<meta name="viewport" content="width=device-width, initial-scale=1" />'
-          + '<title>' + escapeHtml(number) + ' - Roxana Decoraciones</title>'
-          + '<style>' + (style ? style.textContent : "") + '\n'
-          + 'body{background:#fff;padding:18px;} .quote{box-shadow:none;margin:0 auto;}'
-          + '@media print{body{padding:0;}.quote{max-width:none;}}</style>'
-          + '</head><body>' + quote.outerHTML + '</body></html>';
-
-        if (window.Blob && window.URL && URL.createObjectURL) {
-          var blob = new Blob([html], { type: "text/html;charset=utf-8" });
-          var url = URL.createObjectURL(blob);
-          var link = document.createElement("a");
-          link.href = url;
-          link.download = fileName;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          setTimeout(function () {
-            URL.revokeObjectURL(url);
-          }, 1000);
-        } else {
-          window.location.href = "data:text/html;charset=utf-8," + encodeURIComponent(html);
-        }
+      function setSaveButtonBusy(isBusy) {
+        var button = document.getElementById("printQuote");
+        button.disabled = isBusy;
+        button.textContent = isBusy ? "Generando..." : "Guardar PDF";
       }
 
-      document.getElementById("printQuote").addEventListener("click", saveQuoteFile);
+      function saveQuotePdf() {
+        renderPreview();
+        var quote = document.querySelector(".quote");
+        var number = document.getElementById("quoteNumber").value || "presupuesto";
+        var fileName = safeFileName(number) + ".pdf";
+
+        if (!window.html2canvas || !window.jspdf || !window.jspdf.jsPDF) {
+          alert("No se pudo cargar el generador de PDF. Revisa la conexion a internet e intenta de nuevo.");
+          return;
+        }
+
+        setSaveButtonBusy(true);
+        html2canvas(quote, {
+          backgroundColor: "#ffffff",
+          scale: 2,
+          useCORS: true,
+          scrollX: 0,
+          scrollY: 0,
+          windowWidth: quote.scrollWidth
+        }).then(function (canvas) {
+          var pdf = new window.jspdf.jsPDF("p", "mm", "a4");
+          var pageWidth = 210;
+          var pageHeight = 297;
+          var margin = 10;
+          var imgWidth = pageWidth - margin * 2;
+          var imgHeight = canvas.height * imgWidth / canvas.width;
+          var imgData = canvas.toDataURL("image/jpeg", 0.95);
+          var usablePageHeight = pageHeight - margin * 2;
+          var heightLeft = imgHeight;
+          var y = margin;
+
+          pdf.addImage(imgData, "JPEG", margin, y, imgWidth, imgHeight);
+          heightLeft -= usablePageHeight;
+
+          while (heightLeft > 0) {
+            pdf.addPage();
+            y = margin - (imgHeight - heightLeft);
+            pdf.addImage(imgData, "JPEG", margin, y, imgWidth, imgHeight);
+            heightLeft -= usablePageHeight;
+          }
+
+          pdf.save(fileName);
+          setSaveButtonBusy(false);
+        }).catch(function () {
+          setSaveButtonBusy(false);
+          alert("No se pudo generar el PDF. Intenta de nuevo desde Chrome, Safari o la web publicada.");
+        });
+      }
+
+      document.getElementById("printQuote").addEventListener("click", saveQuotePdf);
 
       function buildWhatsAppMessage() {
         renderPreview();
