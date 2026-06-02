@@ -472,6 +472,7 @@ Este presupuesto es válido hasta la fecha indicada.</textarea>
         </div>
         <div class="actions">
           <button id="printQuote" class="btn" type="button">Guardar archivo</button>
+          <button id="whatsappQuote" class="btn secondary" type="button">Enviar WhatsApp</button>
           <button id="resetQuote" class="btn secondary" type="button">Restablecer</button>
         </div>
       </section>
@@ -773,6 +774,58 @@ Este presupuesto es válido hasta la fecha indicada.</textarea>
       }
 
       document.getElementById("printQuote").addEventListener("click", saveQuoteFile);
+
+      function buildWhatsAppMessage() {
+        renderPreview();
+        var lines = [];
+        var clientName = document.getElementById("clientName").value || "Cliente";
+        var quoteNumber = document.getElementById("quoteNumber").value || "-";
+        var quoteDate = formatDate(document.getElementById("quoteDate").value);
+        var validUntil = formatDate(document.getElementById("validUntil").value);
+        var notes = document.getElementById("notes").value;
+
+        lines.push("Roxana Decoraciones");
+        lines.push(COMPANY_CONTACT);
+        lines.push("");
+        lines.push("Presupuesto: " + quoteNumber);
+        lines.push("Fecha: " + quoteDate);
+        lines.push("Valido hasta: " + validUntil);
+        lines.push("");
+        lines.push("Cliente: " + clientName);
+
+        if (items.length) {
+          lines.push("");
+          lines.push("Partidas:");
+          for (var i = 0; i < items.length; i += 1) {
+            var item = items[i];
+            var quantity = parseFloat(item.quantity) || 0;
+            var price = parseFloat(item.price) || 0;
+            var lineTotal = quantity * price;
+            lines.push("- " + (item.description || "Partida") + " x " + formatNumber(quantity).replace(",00", "") + ": " + money(lineTotal));
+            if (item.detail) lines.push("  Detalle: " + item.detail);
+          }
+        }
+
+        lines.push("");
+        lines.push("Subtotal: " + document.getElementById("subtotal").textContent);
+        lines.push("Descuento: " + document.getElementById("discountTotal").textContent);
+        lines.push("Total: " + document.getElementById("grandTotal").textContent);
+
+        if (notes) {
+          lines.push("");
+          lines.push(notes);
+        }
+
+        return lines.join("\n");
+      }
+
+      function sendWhatsApp() {
+        var message = buildWhatsAppMessage();
+        var url = "https://wa.me/?text=" + encodeURIComponent(message);
+        window.open(url, "_blank");
+      }
+
+      document.getElementById("whatsappQuote").addEventListener("click", sendWhatsApp);
 
       document.getElementById("resetQuote").addEventListener("click", function () {
         if (!confirm("¿Restablecer el presupuesto?")) return;
