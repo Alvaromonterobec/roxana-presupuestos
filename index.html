@@ -411,7 +411,7 @@
   <main class="app">
     <aside class="editor">
       <h1>Generador de presupuestos</h1>
-      <p class="subtitle">Rellena los datos, ajusta partidas y usa imprimir para crear el PDF.</p>
+      <p class="subtitle">Rellena los datos, ajusta partidas y guarda el presupuesto como archivo.</p>
 
       <section class="section">
         <h3 class="section-title">Datos del presupuesto</h3>
@@ -471,7 +471,7 @@ Este presupuesto es válido hasta la fecha indicada.</textarea>
           </label>
         </div>
         <div class="actions">
-          <button id="printQuote" class="btn" type="button">Imprimir / PDF</button>
+          <button id="printQuote" class="btn" type="button">Guardar archivo</button>
           <button id="resetQuote" class="btn secondary" type="button">Restablecer</button>
         </div>
       </section>
@@ -612,6 +612,12 @@ Este presupuesto es válido hasta la fecha indicada.</textarea>
         });
       }
 
+      function safeFileName(value) {
+        var name = String(value || "presupuesto").replace(/[^a-zA-Z0-9_-]+/g, "-");
+        name = name.replace(/^-+|-+$/g, "");
+        return name || "presupuesto";
+      }
+
       function renderItemsEditor() {
         var html = "";
         for (var i = 0; i < items.length; i += 1) {
@@ -734,13 +740,39 @@ Este presupuesto es válido hasta la fecha indicada.</textarea>
         renderPreview();
       });
 
-      document.getElementById("printQuote").addEventListener("click", function () {
-        if (typeof window.print === "function") {
-          window.print();
+      function saveQuoteFile() {
+        renderPreview();
+        var quote = document.querySelector(".quote");
+        var style = document.querySelector("style");
+        var number = document.getElementById("quoteNumber").value || "presupuesto";
+        var fileName = safeFileName(number) + ".html";
+        var html = ''
+          + '<!doctype html><html lang="es"><head><meta charset="utf-8" />'
+          + '<meta name="viewport" content="width=device-width, initial-scale=1" />'
+          + '<title>' + escapeHtml(number) + ' - Roxana Decoraciones</title>'
+          + '<style>' + (style ? style.textContent : "") + '\n'
+          + 'body{background:#fff;padding:18px;} .quote{box-shadow:none;margin:0 auto;}'
+          + '@media print{body{padding:0;}.quote{max-width:none;}}</style>'
+          + '</head><body>' + quote.outerHTML + '</body></html>';
+
+        if (window.Blob && window.URL && URL.createObjectURL) {
+          var blob = new Blob([html], { type: "text/html;charset=utf-8" });
+          var url = URL.createObjectURL(blob);
+          var link = document.createElement("a");
+          link.href = url;
+          link.download = fileName;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          setTimeout(function () {
+            URL.revokeObjectURL(url);
+          }, 1000);
         } else {
-          alert("Para guardar en PDF, usa el menú de compartir o imprimir del navegador.");
+          window.location.href = "data:text/html;charset=utf-8," + encodeURIComponent(html);
         }
-      });
+      }
+
+      document.getElementById("printQuote").addEventListener("click", saveQuoteFile);
 
       document.getElementById("resetQuote").addEventListener("click", function () {
         if (!confirm("¿Restablecer el presupuesto?")) return;
