@@ -446,7 +446,7 @@
           <label>Nombre
             <input id="clientName" value="" />
           </label>
-          <label>Email / teléfono
+          <label>Teléfono
             <input id="clientContact" value="" />
           </label>
           <label class="span-2">Dirección o referencia
@@ -534,7 +534,7 @@ Este presupuesto es válido hasta la fecha indicada.</textarea>
   <script>
     (function () {
       var COMPANY_CONTACT = "+591 72663459";
-      var CURRENCY_LABEL = "BOB";
+      var CURRENCY_LABEL = "Bs";
       var fields = ["quoteNumber", "quoteDate", "validUntil", "clientName", "clientContact", "clientDetails", "discount", "tax", "notes"];
       var itemsEl = document.getElementById("items");
       var items = loadItems();
@@ -872,13 +872,30 @@ Este presupuesto es válido hasta la fecha indicada.</textarea>
       document.getElementById("whatsappQuote").addEventListener("click", sendWhatsApp);
 
       document.getElementById("resetQuote").addEventListener("click", function () {
-        if (!confirm("¿Restablecer el presupuesto?")) return;
-        storageClear();
-        items = [];
-        loadState();
-        renderItemsEditor();
-        renderPreview();
-      });
+  if (!confirm("¿Restablecer el presupuesto?")) return;
+
+  storageClear();
+
+  items = [];
+
+  document.getElementById("quoteNumber").value = "P-2026-001";
+  document.getElementById("quoteDate").value = todayIso(0);
+  document.getElementById("validUntil").value = todayIso(30);
+
+  document.getElementById("clientName").value = "";
+  document.getElementById("clientContact").value = "";
+  document.getElementById("clientDetails").value = "";
+
+  document.getElementById("discount").value = "0";
+  document.getElementById("tax").value = "21";
+
+  document.getElementById("notes").value =
+`Forma de pago: 70% al aceptar el presupuesto y 30% a la entrega.
+Este presupuesto es válido hasta la fecha indicada.`;
+
+  renderItemsEditor();
+  renderPreview();
+});
 
       for (var i = 0; i < fields.length; i += 1) {
         document.getElementById(fields[i]).addEventListener("input", renderPreview);
