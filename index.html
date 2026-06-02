@@ -1,0 +1,765 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Generador de presupuestos</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --ink: #1f2937;
+      --muted: #667085;
+      --line: #d9e0ea;
+      --brand: #0f766e;
+      --brand-dark: #115e59;
+      --accent: #c2410c;
+      --soft: #eef7f6;
+      --shadow: 0 14px 42px rgba(31, 41, 55, 0.12);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--bg);
+    }
+
+    button, input, textarea, select {
+      font: inherit;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: minmax(340px, 470px) minmax(0, 1fr);
+    }
+
+    .editor {
+      padding: 28px;
+      background: #fbfcfe;
+      border-right: 1px solid var(--line);
+      overflow: auto;
+      max-height: 100vh;
+    }
+
+    .preview-wrap {
+      padding: 28px;
+      overflow: auto;
+      max-height: 100vh;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: 28px;
+      line-height: 1.15;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 0 0 22px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .section {
+      padding: 18px 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .section:first-of-type {
+      border-top: 0;
+      padding-top: 0;
+    }
+
+    .section-title {
+      margin: 0 0 12px;
+      font-size: 13px;
+      text-transform: uppercase;
+      color: #475467;
+      letter-spacing: 0.05em;
+      font-weight: 800;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: #344054;
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 8px;
+      padding: 10px 11px;
+      color: var(--ink);
+      outline: none;
+    }
+
+    textarea {
+      min-height: 82px;
+      resize: vertical;
+    }
+
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
+    }
+
+    .span-2 {
+      grid-column: 1 / -1;
+    }
+
+    .items {
+      display: grid;
+      gap: 10px;
+    }
+
+    .item-row {
+      display: grid;
+      grid-template-columns: minmax(130px, 1fr) minmax(130px, 1fr) 76px 92px 38px;
+      gap: 8px;
+      align-items: end;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .icon-btn {
+      width: 38px;
+      height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      cursor: pointer;
+      color: var(--muted);
+      display: inline-grid;
+      place-items: center;
+    }
+
+    .icon-btn:hover {
+      color: #b42318;
+      border-color: #f5b5ae;
+      background: #fff5f3;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 8px;
+      padding: 11px 14px;
+      font-weight: 800;
+      cursor: pointer;
+      color: #fff;
+      background: var(--brand);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn:hover {
+      background: var(--brand-dark);
+    }
+
+    .btn.secondary {
+      color: var(--ink);
+      background: #e8edf4;
+    }
+
+    .btn.secondary:hover {
+      background: #d8e0eb;
+    }
+
+    .quote {
+      max-width: 920px;
+      margin: 0 auto;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .quote-head {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 24px;
+      padding: 38px 42px 28px;
+      color: #fff;
+      background: linear-gradient(135deg, #0f766e 0%, #155e75 100%);
+    }
+
+    .quote h2 {
+      margin: 0;
+      font-size: 34px;
+      letter-spacing: 0;
+    }
+
+    .quote-number {
+      text-align: right;
+      display: grid;
+      gap: 5px;
+      font-weight: 750;
+    }
+
+    .quote-number span {
+      opacity: 0.82;
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    .quote-body {
+      padding: 34px 42px 42px;
+    }
+
+    .party-grid {
+      margin-bottom: 28px;
+    }
+
+    .party {
+      border-left: 4px solid var(--brand);
+      padding-left: 14px;
+    }
+
+    .eyebrow {
+      margin: 0 0 6px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .party strong {
+      display: block;
+      font-size: 17px;
+      margin-bottom: 4px;
+    }
+
+    .party p {
+      margin: 0;
+      color: #475467;
+      white-space: pre-line;
+      line-height: 1.5;
+    }
+
+    .line-detail {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+      white-space: pre-line;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 8px 0 22px;
+    }
+
+    th {
+      text-align: left;
+      color: #475467;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 11px 10px;
+      border-bottom: 2px solid var(--line);
+    }
+
+    td {
+      padding: 13px 10px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+
+    th:nth-child(2), th:nth-child(3), th:nth-child(4),
+    td:nth-child(2), td:nth-child(3), td:nth-child(4) {
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .totals {
+      display: grid;
+      justify-content: end;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .total-row {
+      width: min(360px, 100%);
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 24px;
+      color: #475467;
+    }
+
+    .total-row.final {
+      color: var(--ink);
+      background: var(--soft);
+      border-radius: 8px;
+      padding: 14px 16px;
+      font-size: 21px;
+      font-weight: 900;
+    }
+
+    .notes {
+      margin-top: 30px;
+      padding: 18px;
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: #475467;
+      white-space: pre-line;
+      line-height: 1.55;
+    }
+
+    .empty {
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    @media (max-width: 920px) {
+      .app {
+        display: block;
+      }
+
+      .editor, .preview-wrap {
+        max-height: none;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .editor, .preview-wrap {
+        padding: 18px;
+      }
+
+      .grid, .quote-head {
+        grid-template-columns: 1fr;
+      }
+
+      .item-row {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .item-row label:first-child,
+      .item-row label:nth-child(2) {
+        grid-column: 1 / -1;
+      }
+
+      .quote-number {
+        text-align: left;
+      }
+
+      .quote-body, .quote-head {
+        padding-left: 22px;
+        padding-right: 22px;
+      }
+
+      th:nth-child(2), td:nth-child(2) {
+        display: none;
+      }
+    }
+
+    @media print {
+      body {
+        background: #fff;
+      }
+
+      .editor {
+        display: none;
+      }
+
+      .app {
+        display: block;
+      }
+
+      .preview-wrap {
+        padding: 0;
+        max-height: none;
+      }
+
+      .quote {
+        box-shadow: none;
+        border-radius: 0;
+        max-width: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <aside class="editor">
+      <h1>Generador de presupuestos</h1>
+      <p class="subtitle">Rellena los datos, ajusta partidas y usa imprimir para crear el PDF.</p>
+
+      <section class="section">
+        <h3 class="section-title">Datos del presupuesto</h3>
+        <div class="grid">
+          <label>Número
+            <input id="quoteNumber" value="P-2026-001" />
+          </label>
+          <label>Fecha
+            <input id="quoteDate" type="date" />
+          </label>
+          <label>Validez
+            <input id="validUntil" type="date" />
+          </label>
+        </div>
+      </section>
+
+      <section class="section">
+        <h3 class="section-title">Empresa</h3>
+        <p class="subtitle"><strong>Roxana Decoraciones</strong><br />+591 72663459</p>
+      </section>
+
+      <section class="section">
+        <h3 class="section-title">Cliente</h3>
+        <div class="grid">
+          <label>Nombre
+            <input id="clientName" value="" />
+          </label>
+          <label>Email / teléfono
+            <input id="clientContact" value="" />
+          </label>
+          <label class="span-2">Dirección o referencia
+            <textarea id="clientDetails"></textarea>
+          </label>
+        </div>
+      </section>
+
+      <section class="section">
+        <h3 class="section-title">Partidas</h3>
+        <div id="items" class="items"></div>
+        <div class="actions">
+          <button id="addItem" class="btn secondary" type="button">+ Añadir partida</button>
+        </div>
+      </section>
+
+      <section class="section">
+        <h3 class="section-title">Ajustes</h3>
+        <div class="grid">
+          <label>Descuento (%)
+            <input id="discount" type="number" min="0" step="0.01" value="0" />
+          </label>
+          <label>IVA / impuesto (%)
+            <input id="tax" type="number" min="0" step="0.01" value="21" />
+          </label>
+          <label class="span-2">Notas y condiciones
+            <textarea id="notes">Forma de pago: 70% al aceptar el presupuesto y 30% a la entrega.
+Este presupuesto es válido hasta la fecha indicada.</textarea>
+          </label>
+        </div>
+        <div class="actions">
+          <button id="printQuote" class="btn" type="button">Imprimir / PDF</button>
+          <button id="resetQuote" class="btn secondary" type="button">Restablecer</button>
+        </div>
+      </section>
+    </aside>
+
+    <section class="preview-wrap">
+      <article class="quote" aria-label="Vista previa del presupuesto">
+        <header class="quote-head">
+          <div>
+            <h2>Roxana Decoraciones</h2>
+            <p id="previewCompanyContact"></p>
+          </div>
+          <div class="quote-number">
+            <span>Número</span>
+            <div id="previewNumber"></div>
+            <span>Fecha</span>
+            <div id="previewDate"></div>
+            <span>Válido hasta</span>
+            <div id="previewValid"></div>
+          </div>
+        </header>
+        <div class="quote-body">
+          <div class="party-grid">
+            <div class="party to">
+              <p class="eyebrow">Cliente</p>
+              <strong id="previewClient"></strong>
+              <p id="previewClientDetails"></p>
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Concepto</th>
+                <th>Cant.</th>
+                <th>Precio</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody id="previewItems"></tbody>
+          </table>
+
+          <div class="totals">
+            <div class="total-row"><span>Subtotal</span><strong id="subtotal"></strong></div>
+            <div class="total-row"><span>Descuento</span><strong id="discountTotal"></strong></div>
+            <div class="total-row final"><span>Total</span><strong id="grandTotal"></strong></div>
+          </div>
+
+          <div class="notes" id="previewNotes"></div>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      var COMPANY_CONTACT = "+591 72663459";
+      var CURRENCY_LABEL = "BOB";
+      var fields = ["quoteNumber", "quoteDate", "validUntil", "clientName", "clientContact", "clientDetails", "discount", "tax", "notes"];
+      var itemsEl = document.getElementById("items");
+      var items = loadItems();
+
+      function storageGet(key) {
+        try {
+          return window.localStorage ? localStorage.getItem(key) : null;
+        } catch (error) {
+          return null;
+        }
+      }
+
+      function storageSet(key, value) {
+        try {
+          if (window.localStorage) localStorage.setItem(key, value);
+        } catch (error) {}
+      }
+
+      function storageClear() {
+        try {
+          if (window.localStorage) localStorage.clear();
+        } catch (error) {}
+      }
+
+      function todayIso(offsetDays) {
+        var date = new Date();
+        date.setDate(date.getDate() + (offsetDays || 0));
+        var year = date.getFullYear();
+        var month = String(date.getMonth() + 1);
+        var day = String(date.getDate());
+        if (month.length < 2) month = "0" + month;
+        if (day.length < 2) day = "0" + day;
+        return year + "-" + month + "-" + day;
+      }
+
+      function loadItems() {
+        var saved = storageGet("quoteItems");
+        var parsed = [];
+        try {
+          parsed = saved ? JSON.parse(saved) : [];
+        } catch (error) {
+          parsed = [];
+        }
+        if (!Array.isArray(parsed)) parsed = [];
+        for (var i = 0; i < parsed.length; i += 1) {
+          if (typeof parsed[i].detail === "undefined") parsed[i].detail = "";
+        }
+        return parsed;
+      }
+
+      function formatDate(value) {
+        if (!value) return "-";
+        var parts = value.split("-");
+        if (parts.length !== 3) return value;
+        var months = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+        var monthIndex = parseInt(parts[1], 10) - 1;
+        return parts[2] + " de " + months[monthIndex] + " de " + parts[0];
+      }
+
+      function formatNumber(value) {
+        var number = Math.round((Number(value) || 0) * 100) / 100;
+        var fixed = number.toFixed(2);
+        var parts = fixed.split(".");
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        return parts[0] + "," + parts[1];
+      }
+
+      function money(value) {
+        return formatNumber(value) + " " + CURRENCY_LABEL;
+      }
+
+      function numberValue(id) {
+        return parseFloat(document.getElementById(id).value) || 0;
+      }
+
+      function escapeHtml(value) {
+        return String(value || "").replace(/[&<>"']/g, function (char) {
+          var map = { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#039;" };
+          return map[char];
+        });
+      }
+
+      function renderItemsEditor() {
+        var html = "";
+        for (var i = 0; i < items.length; i += 1) {
+          var item = items[i];
+          html += ''
+            + '<div class="item-row">'
+            + '<label>Concepto'
+            + '<input data-key="description" data-index="' + i + '" value="' + escapeHtml(item.description) + '" />'
+            + '</label>'
+            + '<label>Detalle'
+            + '<input data-key="detail" data-index="' + i + '" value="' + escapeHtml(item.detail) + '" />'
+            + '</label>'
+            + '<label>Cantidad'
+            + '<input data-key="quantity" data-index="' + i + '" type="number" min="0" step="0.01" value="' + escapeHtml(item.quantity) + '" />'
+            + '</label>'
+            + '<label>Precio'
+            + '<input data-key="price" data-index="' + i + '" type="number" min="0" step="0.01" value="' + escapeHtml(item.price) + '" />'
+            + '</label>'
+            + '<button class="icon-btn" type="button" title="Eliminar partida" aria-label="Eliminar partida" data-remove="' + i + '">×</button>'
+            + '</div>';
+        }
+        itemsEl.innerHTML = html;
+      }
+
+      function renderPreview() {
+        document.getElementById("previewNumber").textContent = document.getElementById("quoteNumber").value || "-";
+        document.getElementById("previewDate").textContent = formatDate(document.getElementById("quoteDate").value);
+        document.getElementById("previewValid").textContent = formatDate(document.getElementById("validUntil").value);
+        document.getElementById("previewCompanyContact").textContent = COMPANY_CONTACT;
+        document.getElementById("previewClient").textContent = document.getElementById("clientName").value || "-";
+
+        var clientInfo = [];
+        if (document.getElementById("clientContact").value) clientInfo.push(document.getElementById("clientContact").value);
+        if (document.getElementById("clientDetails").value) clientInfo.push(document.getElementById("clientDetails").value);
+        document.getElementById("previewClientDetails").textContent = clientInfo.join("\n");
+        document.getElementById("previewNotes").textContent = document.getElementById("notes").value;
+
+        var tbody = document.getElementById("previewItems");
+        tbody.innerHTML = "";
+        if (!items.length) {
+          tbody.innerHTML = '<tr><td class="empty" colspan="4">Añade una partida para empezar.</td></tr>';
+        }
+
+        var subtotal = 0;
+        for (var i = 0; i < items.length; i += 1) {
+          var item = items[i];
+          var quantity = parseFloat(item.quantity) || 0;
+          var price = parseFloat(item.price) || 0;
+          var lineTotal = quantity * price;
+          subtotal += lineTotal;
+          var tr = document.createElement("tr");
+          tr.innerHTML = ''
+            + '<td>' + escapeHtml(item.description || "-") + '<span class="line-detail">' + escapeHtml(item.detail || "") + '</span></td>'
+            + '<td>' + formatNumber(quantity).replace(",00", "") + '</td>'
+            + '<td>' + money(price) + '</td>'
+            + '<td><strong>' + money(lineTotal) + '</strong></td>';
+          tbody.appendChild(tr);
+        }
+
+        var discountTotal = subtotal * (numberValue("discount") / 100);
+        var taxable = Math.max(subtotal - discountTotal, 0);
+        var taxTotal = taxable * (numberValue("tax") / 100);
+        var grandTotal = taxable + taxTotal;
+
+        document.getElementById("subtotal").textContent = money(subtotal);
+        document.getElementById("discountTotal").textContent = "-" + money(discountTotal);
+        document.getElementById("grandTotal").textContent = money(grandTotal);
+        saveState();
+      }
+
+      function saveState() {
+        for (var i = 0; i < fields.length; i += 1) {
+          storageSet(fields[i], document.getElementById(fields[i]).value);
+        }
+        storageSet("quoteItems", JSON.stringify(items));
+      }
+
+      function loadState() {
+        for (var i = 0; i < fields.length; i += 1) {
+          var saved = storageGet(fields[i]);
+          if (saved !== null) document.getElementById(fields[i]).value = saved;
+        }
+        if (!document.getElementById("quoteDate").value) document.getElementById("quoteDate").value = todayIso(0);
+        if (!document.getElementById("validUntil").value) document.getElementById("validUntil").value = todayIso(30);
+      }
+
+      function updateItemFromInput(input) {
+        var index = parseInt(input.getAttribute("data-index"), 10);
+        var key = input.getAttribute("data-key");
+        if (isNaN(index) || !key || !items[index]) return;
+        if (key === "description" || key === "detail") {
+          items[index][key] = input.value;
+        } else {
+          items[index][key] = parseFloat(input.value) || 0;
+        }
+        renderPreview();
+      }
+
+      itemsEl.addEventListener("input", function (event) {
+        updateItemFromInput(event.target);
+      });
+
+      itemsEl.addEventListener("change", function (event) {
+        updateItemFromInput(event.target);
+      });
+
+      itemsEl.addEventListener("click", function (event) {
+        var removeValue = event.target.getAttribute("data-remove");
+        var index = parseInt(removeValue, 10);
+        if (!isNaN(index)) {
+          items.splice(index, 1);
+          renderItemsEditor();
+          renderPreview();
+        }
+      });
+
+      document.getElementById("addItem").addEventListener("click", function () {
+        items.push({ description: "", detail: "", quantity: 1, price: 0 });
+        renderItemsEditor();
+        renderPreview();
+      });
+
+      document.getElementById("printQuote").addEventListener("click", function () {
+        if (typeof window.print === "function") {
+          window.print();
+        } else {
+          alert("Para guardar en PDF, usa el menú de compartir o imprimir del navegador.");
+        }
+      });
+
+      document.getElementById("resetQuote").addEventListener("click", function () {
+        if (!confirm("¿Restablecer el presupuesto?")) return;
+        storageClear();
+        items = [];
+        loadState();
+        renderItemsEditor();
+        renderPreview();
+      });
+
+      for (var i = 0; i < fields.length; i += 1) {
+        document.getElementById(fields[i]).addEventListener("input", renderPreview);
+        document.getElementById(fields[i]).addEventListener("change", renderPreview);
+      }
+
+      loadState();
+      renderItemsEditor();
+      renderPreview();
+    })();
+  </script>
+</body>
+</html>
