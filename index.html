@@ -790,7 +790,24 @@ Este presupuesto es válido hasta la fecha indicada.</textarea>
             heightLeft -= usablePageHeight;
           }
 
-          pdf.save(fileName);
+          if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+
+  const blob = pdf.output('blob');
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName;
+
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+} else {
+  pdf.save(fileName);
+};
           setSaveButtonBusy(false);
         }).catch(function () {
           setSaveButtonBusy(false);
